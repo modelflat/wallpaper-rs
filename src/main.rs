@@ -33,8 +33,16 @@ impl Window {
 enum Command<'a> {
     UpdateRunningWallpapers {},
     UpdateActiveWindows {},
-    NewFromSelectedActiveWindow { selected: u32 },
-    NewFromCustomCommand { command: &'a str, selector: wallpaper::WindowSelector<'a> },
+    NewFromSelectedActiveWindow { 
+        selected: u32,
+        properties: wallpaper::WallpaperProperties,
+    },
+    NewFromCustomCommand { 
+        command: &'a str, 
+        selector: wallpaper::WindowSelector<'a>, 
+        properties: wallpaper::WallpaperProperties,
+    },
+    TerminateRunningWallpaper { selected: u32 },
 }
 
 fn command_from_str(command: &str) -> Result<std::process::Command, shellwords::MismatchedQuotes> {
@@ -61,26 +69,18 @@ fn handler(web_view: &mut WebView<UserData>, arg: &str) -> WVResult {
             let windows_stringified = serde_json::to_string(&windows).unwrap();
             web_view.eval(&format!("window._updateList('runningWallpapers', {})", windows_stringified)).unwrap();
         },
-        Command::NewFromSelectedActiveWindow { selected } => {
+        Command::NewFromSelectedActiveWindow { selected, properties } => {
             let wp = wallpaper::Engine::new().expect("Failed to create wallpaper engine");
-            let properties = wallpaper::WallpaperProperties {
-                fullscreen: true
-            };
             let result = wp.add_window_by_handle(selected as winapi::shared::windef::HWND, properties);
             if !result {
                 eprintln!("Failed to add window");
             }
         },
-        Command::NewFromCustomCommand { command, selector } => {
+        Command::NewFromCustomCommand { command, selector, properties } => {
             let wp = wallpaper::Engine::new().expect("Failed to create wallpaper engine");
-            let properties = wallpaper::WallpaperProperties {
-                fullscreen: true
-            };
             if !command.trim_start().trim_end().is_empty() {
                 match command_from_str(command) {
                     Ok(mut command) => {
-                        println!("{:?}", &command);
-                        println!("{:?}", selector);
                         wp.add_window(Some(&mut command), selector, properties, 50, 100);
                     },
                     Err(error) => {
