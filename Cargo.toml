@@ -1,6 +1,6 @@
 [package]
-name = "wpe"
-version = "0.1.0"
+name = "wallpaper-rs"
+version = "1.0.0"
 authors = ["modelflat <zhykreg@gmail.com>"]
 edition = "2018"
 
@@ -13,5 +13,5 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 web-view = { version = "0.5.4", features = ["edge"] }
 winapi = { version = "0.3", features = [
-    "winuser", "shellapi", "errhandlingapi", "processthreadsapi", "impl-debug", "impl-default",
+    "winuser", "errhandlingapi", "impl-debug", "impl-default",
 ] }

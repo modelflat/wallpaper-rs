@@ -55,6 +55,7 @@ fn command_from_str(command: &str) -> Result<std::process::Command, shellwords::
 }
 
 fn handler(web_view: &mut WebView<UserData>, arg: &str) -> WVResult {
+    let wp = wallpaper::Engine::new().expect("Failed to create wallpaper engine");
     let arg: Command = serde_json::from_str(arg).unwrap();
     
     match arg {
@@ -64,20 +65,17 @@ fn handler(web_view: &mut WebView<UserData>, arg: &str) -> WVResult {
             web_view.eval(&format!("window._updateList('activeWindows', {})", windows_stringified)).unwrap();
         },
         Command::UpdateRunningWallpapers {} => {
-            let wp = wallpaper::Engine::new().expect("Failed to create wallpaper engine");
             let windows = Window::from_handles(wp.list_active());
             let windows_stringified = serde_json::to_string(&windows).unwrap();
             web_view.eval(&format!("window._updateList('runningWallpapers', {})", windows_stringified)).unwrap();
         },
         Command::NewFromSelectedActiveWindow { selected, properties } => {
-            let wp = wallpaper::Engine::new().expect("Failed to create wallpaper engine");
             let result = wp.add_window_by_handle(selected as winapi::shared::windef::HWND, properties);
             if !result {
                 eprintln!("Failed to add window");
             }
         },
         Command::NewFromCustomCommand { command, selector, properties } => {
-            let wp = wallpaper::Engine::new().expect("Failed to create wallpaper engine");
             if !command.trim_start().trim_end().is_empty() {
                 match command_from_str(command) {
                     Ok(mut command) => {
@@ -89,8 +87,8 @@ fn handler(web_view: &mut WebView<UserData>, arg: &str) -> WVResult {
                 }
             }
         },
-        other => {
-            println!("Payload: {:?}", other);
+        Command::TerminateRunningWallpaper { selected } => {
+            wp.remove_wallpaper(selected as HWND);
         }
     }
     Ok(())

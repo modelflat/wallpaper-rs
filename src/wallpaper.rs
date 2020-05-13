@@ -22,11 +22,6 @@ fn find_window_by_class(class: &str) -> HWND {
     unsafe { FindWindowW(to_wide(class).as_ptr(), null_mut()) }
 }
 
-fn find_window_by_name(name: &str) -> HWND {
-    use winapi::um::winuser::FindWindowW;
-    unsafe { FindWindowW(null_mut(), to_wide(name).as_ptr()) }
-}
-
 fn to_wide(s: &str) -> Vec<u16> {
     OsStr::new(s).encode_wide().chain(once(0)).collect()
 }
@@ -545,14 +540,14 @@ impl Engine {
         self.add_window_by_handle(handle, properties)
     }
 
-    pub fn close_all(self) {
+    pub fn remove_wallpaper(&self, hwnd: HWND) {
+        // TODO ensure that provided handle is actually attached to wallpaper window
         use winapi::um::winuser::{InvalidateRect, SendMessageW, WM_CLOSE};
         unsafe { 
-            for hwnd in self.list_active().into_iter() {
-                remove_window_from_wallpaper(self.worker, hwnd);
-                std::thread::sleep(std::time::Duration::from_millis(32));
-                SendMessageW(hwnd, WM_CLOSE, 0, 0);
-            }
+            remove_window_from_wallpaper(self.worker, hwnd);
+            std::thread::sleep(std::time::Duration::from_millis(32));
+            SendMessageW(hwnd, WM_CLOSE, 0, 0);
+            std::thread::sleep(std::time::Duration::from_millis(32));
             InvalidateRect(null_mut(), null_mut(), 1);
         }
     }
